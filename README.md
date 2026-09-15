@@ -17,21 +17,29 @@ python3 usb_test.py -v 0x483 -p 0xa2ca
 ```
 ### 2. Bruteforce only wIndex
 ```
-python3 usb_test.py -v 0x483 -p 0xa2ca -b Device-to-Host-Standard-Interface -bR GET_DESCRIPTOR -wV 0x2100
+python3 usb_test.py -v 0x483 -p 0xa2ca -bM 0x81 -bR 0x6 -wV 0x2100
 ```
 ### 3. Bruteforce only wValue
 ```
-python3 usb_test.py -v 0x483 -p 0xa2ca -b Device-to-Host-Standard-Interface -bR GET_DESCRIPTOR -wI 0x0
+python3 usb_test.py -v 0x483 -p 0xa2ca -bM 0x81 -bR 0x6 -wI 0x0
 ```
 ### 4. Bruteforce wValue and wIndex
 ```
-python3 usb_test.py -v 0x483 -p 0xa2ca -b Device-to-Host-Standard-Interface
+python3 usb_test.py -v 0x483 -p 0xa2ca -bM 0x81
 ```
-### 5. Bruteforce wValue and wIndex and bmRequest
+### 5. Bruteforce wValue and wIndex and bmRequestType
 ```
-python3 usb_test.py -v 0x483 -p 0xa2ca -bR GET_DESCRIPTOR
+python3 usb_test.py -v 0x483 -p 0xa2ca -bR 0x6
 ```
 ### 6. Other possibilities
 ```
 python3 usb_test.py -h
 ```
+
+### Note on argument format
+
+All arguments are passed as **hex values**, not names. `-bM 0x81` is
+`Device-to-Host-Standard-Interface`, `-bR 0x6` is `GET_DESCRIPTOR`.
+The script prints the full bmRequestType name/value map on startup, so you can
+look the values up there. Default `-wL` is `0xfde8` (65000), which requires the
+patched libusb from `prereq-*.sh`.

@@ -1,9 +1,7 @@
 import usb.core
 import usb.util
-import time
 import argparse
 import sys
-import signal
 
 bRequestSelected = None
 
@@ -151,8 +149,9 @@ responses = []
 bRequestSelected = {k:v for k,v in bRequestBrute.items() if v ==  args.bRequest}
 bmRequestTypesSelected = {k:v for k,v in bmRequestTypes.items() if v == args.bmRequestType}
 
-if len(bmRequestTypesSelected.keys()) == 0 or len(bRequestSelected.keys()) == 0:
+if len(bRequestSelected.keys()) == 0:
     bRequestSelected = bRequestBrute
+if len(bmRequestTypesSelected.keys()) == 0:
     bmRequestTypesSelected = bmRequestTypes
 
 try:
@@ -161,42 +160,42 @@ try:
             if(args.wValue is not None and args.wValue >= 0 and args.wIndex is not None and args.wIndex >= 0):
                 try:
                     print("[+] bmRequestType={}, description={}, bRequest={}, description={}, wValue={}, wIndex={}, wLength={}".format(hex(vRequestType), kRequestType, hex(vRequest), kRequest, hex(args.wValue), hex(args.wIndex), hex(args.wLength)))
-                    ret = dev.ctrl_transfer(bmRequestType=args.bmRequestType, bRequest=args.bRequest, wValue=args.wValue, wIndex=args.wIndex, data_or_wLength=args.wLength)
+                    ret = dev.ctrl_transfer(bmRequestType=vRequestType, bRequest=vRequest, wValue=args.wValue, wIndex=args.wIndex, data_or_wLength=args.wLength)
                     if(len(ret) > 0):
-                        responses.append({"bmRequestType":hex(args.bmRequestType), "bRequest":hex(args.bRequest), "wValue":hex(args.wValue), "wIndex":hex(args.wIndex), "wLength":hex(args.wLength), "resp":list(ret) })
+                        responses.append({"bmRequestType":hex(vRequestType), "bRequest":hex(vRequest), "wValue":hex(args.wValue), "wIndex":hex(args.wIndex), "wLength":hex(args.wLength), "resp":list(ret) })
                         print(ret)
-                except:
+                except Exception:
                     pass
             elif(args.wValue is not None and args.wValue >= 0 and args.wIndex is None):
                 for wIndex in range(256):
                     try:
                         print("[+] bmRequestType={}, description={}, bRequest={}, description={}, wValue={}, wIndex={}, wLength={}".format(hex(vRequestType), kRequestType, hex(vRequest), kRequest, hex(args.wValue), hex(wIndex), hex(args.wLength)))
-                        ret = dev.ctrl_transfer(bmRequestType=args.bmRequestType, bRequest=args.bRequest, wValue=args.wValue, wIndex=wIndex, data_or_wLength=args.wLength)
+                        ret = dev.ctrl_transfer(bmRequestType=vRequestType, bRequest=vRequest, wValue=args.wValue, wIndex=wIndex, data_or_wLength=args.wLength)
                         if(len(ret) > 0):
-                            responses.append({"bmRequestType":hex(args.bmRequestType), "bRequest":hex(args.bRequest), "wValue":hex(args.wValue), "wIndex":hex(wIndex), "wLength":hex(args.wLength), "resp":list(ret) })
+                            responses.append({"bmRequestType":hex(vRequestType), "bRequest":hex(vRequest), "wValue":hex(args.wValue), "wIndex":hex(wIndex), "wLength":hex(args.wLength), "resp":list(ret) })
                             print(ret)
-                    except:
+                    except Exception:
                         pass
             elif(args.wIndex is not None and args.wIndex >=0 and args.wValue is None):
-                for wValue in range(65535):
+                for wValue in range(65536):
                     try:
                         print("[+] bmRequestType={}, description={}, bRequest={}, description={}, wValue={}, wIndex={}, wLength={}".format(hex(vRequestType), kRequestType, hex(vRequest), kRequest, hex(wValue), hex(args.wIndex), hex(args.wLength)))
-                        ret = dev.ctrl_transfer(bmRequestType=args.bmRequestType, bRequest=args.bRequest, wValue=wValue, wIndex=args.wIndex, data_or_wLength=args.wLength)
+                        ret = dev.ctrl_transfer(bmRequestType=vRequestType, bRequest=vRequest, wValue=wValue, wIndex=args.wIndex, data_or_wLength=args.wLength)
                         if(len(ret) > 0):
-                            responses.append({"bmRequestType":hex(args.bmRequestType), "bRequest":hex(args.bRequest), "wValue":hex(wValue), "wIndex":hex(args.wIndex), "wLength":hex(args.wLength), "resp":list(ret) })
+                            responses.append({"bmRequestType":hex(vRequestType), "bRequest":hex(vRequest), "wValue":hex(wValue), "wIndex":hex(args.wIndex), "wLength":hex(args.wLength), "resp":list(ret) })
                             print(ret)
-                    except:
+                    except Exception:
                         pass
             else:
-                for wValue in range(65535):
+                for wValue in range(65536):
                     for wIndex in range(256):
                         try:
                             print("[+] bmRequestType={}, description={}, bRequest={}, description={}, wValue={}, wIndex={}, wLength={}".format(hex(vRequestType), kRequestType, hex(vRequest), kRequest, hex(wValue), hex(wIndex), hex(args.wLength)))
-                            ret = dev.ctrl_transfer(bmRequestType=args.bmRequestType, bRequest=args.bRequest, wValue=wValue, wIndex=wIndex, data_or_wLength=args.wLength)
+                            ret = dev.ctrl_transfer(bmRequestType=vRequestType, bRequest=vRequest, wValue=wValue, wIndex=wIndex, data_or_wLength=args.wLength)
                             if(len(ret) > 0):
-                                responses.append({"bmRequestType":hex(args.bmRequestType), "bRequest":hex(args.bRequest), "wValue":hex(wValue), "wIndex":hex(wIndex), "wLength":hex(args.wLength), "resp":list(ret) })
+                                responses.append({"bmRequestType":hex(vRequestType), "bRequest":hex(vRequest), "wValue":hex(wValue), "wIndex":hex(wIndex), "wLength":hex(args.wLength), "resp":list(ret) })
                                 print(ret)
-                        except:
+                        except Exception:
                             pass
     if(len(responses) > 0):
         print("[+] Results found !!! save to responses files")
@@ -204,8 +203,8 @@ try:
             f = open("responses%d.txt" % i, "w")
             f.write("{}\n".format(responses[i]))
             f.close()
-            f = open("responses%d.bin" % i, "w")
-            f.write("".join([chr(elem) for elem in responses[i]["resp"]]))
+            f = open("responses%d.bin" % i, "wb")
+            f.write(bytes(responses[i]["resp"]))
             f.close()
     else:
         print("[-] Results not found :(")
