@@ -306,6 +306,9 @@ def summarize(data, verbose=False):
         if len(setups) > 20:
             print("      ... and {} more".format(len(setups) - 20))
 
+    started = any(name.startswith("CAPTURE_START") for name in events)
+    return {"packets": packets, "started": started, "events": events}
+
 
 # --------------------------------------------------------------------------- #
 
@@ -342,7 +345,17 @@ def main():
     total = capture(dev, args.speed, args.seconds, args.output,
                     power_cycle=args.power_cycle)
     if total and not args.no_summary:
-        summarize(open(args.output, "rb").read(), verbose=args.verbose)
+        stats = summarize(open(args.output, "rb").read(), verbose=args.verbose)
+        if stats["packets"] == 0:
+            if args.speed == "auto" and not args.power_cycle:
+                print("[!] No packets captured. Auto speed only locks when it can "
+                      "observe the bus starting (reset/chirp). For a device that is "
+                      "already enumerated, pin the speed (-s hs/fs/ls), or use "
+                      "--power-cycle to force a fresh enumeration.")
+            else:
+                print("[!] No packets captured. Check that the sniffed host is on "
+                      "TARGET-C (AUX is not on the tap), the device is powered/live, "
+                      "and the capture speed matches the device.")
 
 
 if __name__ == "__main__":
