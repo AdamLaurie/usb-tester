@@ -1,9 +1,29 @@
 # usb-tester
 Script for black box testing to discover USB messages on the BUS supported by target device
 
-#### It works and it was tested on raspberry pi 4 and Linux. As long you can use prereq.sh script on your distro it should be fine. Please not that probably for Intel CPUs you need to either install build utils for ARM or change gcc.
+#### It works and it was tested on raspberry pi 4 and Linux. As long you can build the patched libusb on your distro it should be fine. Please note that for ARM/Raspberry Pi you need to cross-compile (install the ARM build utils / gcc).
 
-#### Main goal of the script is to find USB messages supported by target device, either for fuzzing or for fault injection attacks. Using additionally devices like USB hardware triggers (Beagle 480, PhyWhisperer) together with X-Force RED Raiden And/or EMFI you can very deeply test USB stacks on target devices.  
+#### Main goal of the script is to find USB messages supported by target device, either for fuzzing or for fault injection attacks. Using additionally devices like USB hardware triggers (Beagle 480, PhyWhisperer) together with X-Force RED Raiden And/or EMFI you can very deeply test USB stacks on target devices.
+
+## Setup
+
+libusb is vendored as a git submodule (pinned to v1.0.30) and must be patched to raise
+`MAX_CTRL_BUFFER_LENGTH` so the large-`wLength` control transfers this tool sends aren't
+truncated. A `Makefile` automates the whole thing. Build prerequisites:
+`build-essential autoconf automake libtool pkg-config python3-pip`.
+
+```
+git clone --recurse-submodules <repo>        # or: git submodule update --init after cloning
+make install                                  # native x86_64: patch + build/install libusb + pyusb
+```
+
+Raspberry Pi / ARM cross build:
+
+```
+make install HOST=arm-linux-gnueabihf CC=arm-linux-gnueabihf-gcc PREFIX=/usr/local/libusb-rpi
+```
+
+Run `make help` for the individual targets (`submodule`, `patch`, `libusb`, `install-libusb`, `python-deps`).  
 
 ### Examples
 
