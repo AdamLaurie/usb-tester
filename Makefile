@@ -31,7 +31,7 @@ endif
 
 LDSOCONF        := /etc/ld.so.conf.d/libusb.conf
 
-.PHONY: all help install submodule patch preflight libusb install-libusb python-deps ldconfig clean
+.PHONY: all help install submodule patch preflight libusb install-libusb python-deps ldconfig clean sudo-clean
 
 all: help
 
@@ -44,6 +44,8 @@ help:
 	@echo "  make install-libusb  - build then 'sudo make install' libusb + register with ldconfig"
 	@echo "  make python-deps     - pip install runtime deps (pyusb)"
 	@echo "  make clean           - clean build artifacts in the submodule"
+	@echo "  make sudo-clean      - forcibly reset the submodule (removes root-owned"
+	@echo "                         artifacts left by a previous 'sudo make install')"
 	@echo ""
 	@echo "Cross build example (Raspberry Pi):"
 	@echo "  make install HOST=arm-linux-gnueabihf CC=arm-linux-gnueabihf-gcc PREFIX=/usr/local/libusb-rpi"
@@ -96,3 +98,13 @@ python-deps:
 
 clean:
 	-$(MAKE) -C $(LIBUSB_DIR) clean 2>/dev/null || true
+
+# Full reset of the submodule working tree, including root-owned build artifacts
+# and autom4te.cache left behind when libusb was built/installed under sudo (which
+# otherwise make a later non-sudo 'make libusb' fail with Permission denied).
+# Removes all untracked/generated files and reverts the MAX_CTRL_BUFFER_LENGTH
+# patch; re-run 'make patch'/'make libusb' afterward. safe.directory avoids git's
+# dubious-ownership refusal when clearing root-owned files.
+sudo-clean:
+	-sudo git -C $(LIBUSB_DIR) -c safe.directory='*' clean -fdx
+	-sudo git -C $(LIBUSB_DIR) -c safe.directory='*' checkout -- .
