@@ -67,7 +67,7 @@ patch: submodule
 # "autoreconf: not found" from bootstrap.sh.
 preflight:
 	@missing=""; \
-	for t in autoreconf automake libtool gcc make; do \
+	for t in autoreconf automake libtoolize gcc make; do \
 		command -v $$t >/dev/null 2>&1 || missing="$$missing $$t"; \
 	done; \
 	if [ -n "$$missing" ]; then \
