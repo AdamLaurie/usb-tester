@@ -31,7 +31,7 @@ endif
 
 LDSOCONF        := /etc/ld.so.conf.d/libusb.conf
 
-.PHONY: all help install submodule patch libusb install-libusb python-deps ldconfig clean
+.PHONY: all help install submodule patch preflight libusb install-libusb python-deps ldconfig clean
 
 all: help
 
@@ -62,7 +62,23 @@ patch: submodule
 	sed -i -E 's/#define[[:space:]]+MAX_CTRL_BUFFER_LENGTH[[:space:]]+[0-9]+/#define MAX_CTRL_BUFFER_LENGTH $(CTRL_BUFFER_LEN)/' $(LIBUSB_HEADER)
 	@grep -n MAX_CTRL_BUFFER_LENGTH $(LIBUSB_HEADER)
 
-libusb: patch
+# Building from a git checkout regenerates configure via autogen.sh, so the
+# autotools chain must be present. Fail early with the fix instead of a raw
+# "autoreconf: not found" from bootstrap.sh.
+preflight:
+	@missing=""; \
+	for t in autoreconf automake libtool gcc make; do \
+		command -v $$t >/dev/null 2>&1 || missing="$$missing $$t"; \
+	done; \
+	if [ -n "$$missing" ]; then \
+		echo "Error: missing build prerequisites:$$missing"; \
+		echo "Install them with:"; \
+		echo "    sudo apt install -y autoconf automake libtool build-essential pkg-config"; \
+		echo "(autoreconf comes from the 'autoconf' package.)"; \
+		exit 1; \
+	fi
+
+libusb: preflight patch
 	cd $(LIBUSB_DIR) && ./autogen.sh $(CONFIGURE_FLAGS)
 	$(MAKE) -C $(LIBUSB_DIR)
 
